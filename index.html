@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Izzi — Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --border: #282828;
+      --text: #e8e4dc;
+      --muted: #888;
+      --accent: #c8f55a;
+      --accent2: #f5a623;
+      --font-serif: 'DM Serif Display', Georgia, serif;
+      --font-mono: 'DM Mono', 'Courier New', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.7;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.5;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 2.5rem;
+      background: rgba(13,13,13,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
+      color: var(--accent);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--accent); }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0 2.5rem 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-bg-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-serif);
+      font-size: clamp(8rem, 20vw, 18rem);
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(200, 245, 90, 0.06);
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.2s forwards;
+    }
+
+    .hero-title {
+      font-family: var(--font-serif);
+      font-size: clamp(3rem, 8vw, 7rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      max-width: 800px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.4s forwards;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--accent2);
+    }
+
+    .hero-sub {
+      margin-top: 1.5rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+      max-width: 460px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.6s forwards;
+    }
+
+    .hero-cta {
+      margin-top: 2.5rem;
+      display: flex;
+      gap: 1rem;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.8s forwards;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0d0d0d;
+      border: 1px solid var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: transparent;
+      color: var(--accent);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--muted);
+    }
+
+    /* ── SECTION BASE ── */
+    section {
+      padding: 6rem 2.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 3rem;
+    }
+
+    hr.divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0 2.5rem;
+    }
+
+    /* ── ABOUT / RESUME ── */
+    #about .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: start;
+    }
+
+    .about-bio p {
+      color: #b0aa9e;
+      margin-bottom: 1rem;
+      font-size: 0.92rem;
+    }
+
+    .skills-list {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .skills-list li {
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      padding: 0.35rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+
+    .skills-list li:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .resume-block { display: flex; flex-direction: column; gap: 2rem; }
+
+    .resume-item {}
+
+    .resume-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.3rem;
+    }
+
+    .resume-item-title {
+      font-family: var(--font-serif);
+      font-size: 1rem;
+    }
+
+    .resume-item-date {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+
+    .resume-item-company {
+      color: var(--accent2);
+      font-size: 0.78rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .resume-item p {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    /* ── PROJECTS ── */
+    #projects .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .project-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.8rem;
+      transition: border-color 0.2s, transform 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .project-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s;
+    }
+
+    .project-card:hover {
+      border-color: var(--muted);
+      transform: translateY(-3px);
+    }
+
+    .project-card:hover::before { transform: scaleX(1); }
+
+    .project-tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(200, 245, 90, 0.08);
+      padding: 0.2rem 0.6rem;
+      border-radius: 2px;
+      width: fit-content;
+    }
+
+    .project-name {
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+    }
+
+    .project-desc {
+      color: var(--muted);
+      font-size: 0.82rem;
+      flex: 1;
+    }
+
+    .project-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .project-tech {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .project-tech span {
+      font-size: 0.65rem;
+      color: var(--muted);
+    }
+
+    .project-link {
+      font-size: 0.7rem;
+      color: var(--accent2);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+    }
+
+    .project-link:hover { text-decoration: underline; }
+
+    /* ── CONTACT ── */
+    #contact {
+      text-align: center;
+      padding-bottom: 8rem;
+    }
+
+    #contact .section-title {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+    }
+
+    #contact p {
+      color: var(--muted);
+      max-width: 420px;
+      margin: 0 auto 2.5rem;
+      font-size: 0.88rem;
+    }
+
+    .contact-links {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s, transform 0.6s;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 700px) {
+      nav { padding: 1rem 1.2rem; }
+      .nav-links { gap: 1.2rem; }
+      #hero { padding: 0 1.2rem 4rem; }
+      section { padding: 4rem 1.2rem; }
+      #about .about-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+      footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#hero">izzi.</a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-bg-text">IT</div>
+    <div class="hero-label">Available for consulting</div>
+    <h1 class="hero-title">IT Systems<br>& <em>Automation</em><br>Engineer</h1>
+    <p class="hero-sub">
+      Building reliable infrastructure, smarter workflows, and
+      scalable IT systems for modern organizations.
+    </p>
+    <div class="hero-cta">
+      <a href="#projects" class="btn btn-primary">View Projects</a>
+      <a href="#contact" class="btn btn-ghost">Get in touch</a>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ABOUT / RESUME -->
+  <section id="about">
+    <div class="section-label">01 — About</div>
+    <h2 class="section-title reveal">Background &amp;<br>Experience</h2>
+    <div class="about-grid">
+      <div class="about-bio reveal">
+        <p>
+          IT professional with hands-on experience in identity management,
+          device administration, and workflow automation. I work daily with
+          Okta, Google Workspace, and MDM platforms to keep organizations
+          running securely and efficiently.
+        </p>
+        <p>
+          I focus on building scalable, low-maintenance IT systems —
+          automating the repetitive, securing the critical, and making
+          life easier for the people I support.
+        </p>
+        <p>
+          Based in Herzliya, Israel. Open to remote IT consulting engagements
+          for small businesses.
+        </p>
+        <ul class="skills-list">
+          <li>Okta</li>
+          <li>Google Workspace</li>
+          <li>MDM / Device Mgmt</li>
+          <li>Okta Workflows</li>
+          <li>Identity Governance</li>
+          <li>Python</li>
+          <li>Bash / GAM</li>
+          <li>IT Consulting</li>
+        </ul>
+      </div>
+
+      <div class="resume-block reveal">
+        <!-- Edit these with your real experience -->
+        <div class="resume-item">
+          <div class="resume-item-header">
+            <span class="resume-item-title">IT Systems Administrator</span>
+            <span class="resume-item-date">2022 — Present</span>
+          </div>
+          <div class="resume-item-company">Forter</div>
+          <p>Managing Okta, Google Workspace, and endpoint security. Automating onboarding workflows and identity lifecycle management.</p>
+        </div>
+
+        <div class="resume-item">
+          <div class="resume-item-header">
+            <span class="resume-item-title">Previous Role</span>
+            <span class="resume-item-date">20XX — 20XX</span>
+          </div>
+          <div class="resume-item-company">Company Name</div>
+          <p>Add your previous experience here. Keep it concise — 1–2 lines per role works well on a portfolio.</p>
+        </div>
+
+        <a href="#" class="btn btn-ghost" style="width:fit-content; margin-top:1rem;">
+          Download CV ↓
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="section-label">02 — Work</div>
+    <h2 class="section-title reveal">Projects</h2>
+
+    <div class="projects-grid">
+
+      <!-- PROJECT CARD TEMPLATE — duplicate and fill in -->
+      <div class="project-card reveal">
+        <span class="project-tag">Identity & Access</span>
+        <div class="project-name">Okta Onboarding Automation</div>
+        <p class="project-desc">
+          Automated employee lifecycle workflows in Okta — provisioning, deprovisioning,
+          and group assignment based on HR system triggers.
+        </p>
+        <div class="project-footer">
+          <div class="project-tech">
+            <span>Okta</span> · <span>Workflows</span> · <span>API</span>
+          </div>
+          <a href="#" class="project-link">View →</a>
+        </div>
+      </div>
+
+      <div class="project-card reveal">
+        <span class="project-tag">Google Workspace</span>
+        <div class="project-name">Google Workspace Administration</div>
+        <p class="project-desc">
+          Managed Google Workspace for a growing org — GAM scripting, group management,
+          audit reporting, and security policy enforcement.
+        </p>
+        <div class="project-footer">
+          <div class="project-tech">
+            <span>Google Workspace</span> · <span>GAM</span> · <span>Bash</span>
+          </div>
+          <a href="#" class="project-link">View →</a>
+        </div>
+      </div>
+
+      <div class="project-card reveal">
+        <span class="project-tag">Device Management</span>
+        <div class="project-name">Endpoint Management Setup</div>
+        <p class="project-desc">
+          Deployed and configured MDM for Mac and Windows devices — enrollment,
+          policy enforcement, patch management, and compliance reporting.
+        </p>
+        <div class="project-footer">
+          <div class="project-tech">
+            <span>MDM</span> · <span>macOS</span> · <span>Windows</span>
+          </div>
+          <a href="#" class="project-link">View →</a>
+        </div>
+      </div>
+
+      <!-- ADD MORE CARDS HERE -->
+
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="section-label">03 — Contact</div>
+    <h2 class="section-title reveal">Let's work<br><em>together.</em></h2>
+    <p>
+      Open to IT consulting, small business infrastructure setup,
+      or just a conversation about automation and systems.
+    </p>
+    <div class="contact-links">
+      <a href="mailto:your@email.com" class="btn btn-primary">your@email.com</a>
+      <a href="https://github.com/yourusername" class="btn btn-ghost" target="_blank">GitHub</a>
+      <a href="https://linkedin.com/in/yourprofile" class="btn btn-ghost" target="_blank">LinkedIn</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <span>© 2026 Izzi</span>
+    <span>Built with HTML · Hosted on GitHub Pages</span>
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Stagger project cards
+    document.querySelectorAll('.project-card').forEach((card, i) => {
+      card.style.transitionDelay = `${i * 0.08}s`;
+    });
+  </script>
+
+</body>
+</html>
