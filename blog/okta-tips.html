@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10 Okta Tips Every IT Admin Should Know — Izzi Renan</title>
+  <meta name="description" content="After managing Okta for 500+ users, here are the settings, workflows, and habits that save the most time — and the mistakes I see most often.">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8F1EH7CXNH"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-8F1EH7CXNH');
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0d0d;
+      --surface:   #161616;
+      --surface2:  #1e1e1e;
+      --border:    #2a2a2a;
+      --text:      #e8e4dc;
+      --muted:     #777;
+      --accent:    #c8f55a;
+      --accent2:   #f5a623;
+      --accent-dim: rgba(200, 245, 90, 0.08);
+      --nav-bg:    rgba(13, 13, 13, 0.88);
+      --font-serif: 'DM Serif Display', Georgia, serif;
+      --font-mono:  'DM Mono', 'Courier New', monospace;
+      --ease:       cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="light"] {
+      --bg:        #f5f2ec;
+      --surface:   #edeae3;
+      --surface2:  #e4e1d9;
+      --border:    #d4d0c8;
+      --text:      #18160f;
+      --muted:     #706d66;
+      --accent:    #527a00;
+      --accent2:   #b86e00;
+      --accent-dim: rgba(82, 122, 0, 0.08);
+      --nav-bg:    rgba(245, 242, 236, 0.9);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.75;
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.4s var(--ease), color 0.4s var(--ease);
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.45;
+    }
+
+    /* ── NAV ── */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 500; display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 2.5rem; background: var(--nav-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); transition: background 0.4s var(--ease); }
+    .nav-logo { font-family: var(--font-serif); font-size: 1.25rem; color: var(--accent); text-decoration: none; }
+    .nav-right { display: flex; align-items: center; gap: 2.5rem; }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+    .theme-toggle { width: 48px; height: 26px; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; cursor: pointer; position: relative; flex-shrink: 0; }
+    .theme-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); transition: transform 0.35s var(--ease); }
+    [data-theme="light"] .theme-toggle::after { transform: translateX(22px); }
+    .toggle-icon { position: absolute; font-size: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+    .toggle-icon.moon { left: 5px; }
+    .toggle-icon.sun  { right: 5px; }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--text); border-radius: 2px; transition: all 0.3s var(--ease); }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .mobile-menu { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 400; flex-direction: column; align-items: center; justify-content: center; gap: 2.5rem; }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { font-family: var(--font-serif); font-size: 2rem; color: var(--text); text-decoration: none; }
+
+    /* ── ARTICLE ── */
+    .page {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 8rem 2.5rem 6rem;
+    }
+
+    .post-header { margin-bottom: 3rem; }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      margin-bottom: 2rem;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--accent); }
+
+    .post-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .post-tag {
+      font-size: 0.63rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 0.22rem 0.7rem;
+      border-radius: 999px;
+    }
+
+    .post-date { font-size: 0.68rem; color: var(--muted); }
+
+    .post-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    .post-intro {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.85;
+      border-left: 2px solid var(--accent);
+      padding-left: 1.25rem;
+      margin-bottom: 3rem;
+    }
+
+    /* ── CONTENT ── */
+    .post-content { display: flex; flex-direction: column; gap: 2.5rem; }
+
+    .tip {
+      padding: 1.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      position: relative;
+      transition: background 0.4s;
+    }
+
+    .tip-number {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .tip-title {
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+      line-height: 1.2;
+    }
+
+    .tip p {
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.85;
+    }
+
+    .tip-note {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--accent-dim);
+      border-radius: 4px;
+      font-size: 0.78rem;
+      color: var(--accent);
+      line-height: 1.7;
+    }
+
+    /* ── DIVIDER ── */
+    .post-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── CLOSING ── */
+    .post-closing {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.85;
+    }
+
+    .post-closing a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .post-closing a:hover { text-decoration: underline; }
+
+    /* ── AUTHOR ── */
+    .author-card {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      padding: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+
+    .author-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .author-info { font-size: 0.82rem; }
+    .author-name { color: var(--text); font-family: var(--font-serif); font-size: 1rem; margin-bottom: 0.2rem; }
+    .author-bio { color: var(--muted); line-height: 1.6; }
+
+    /* ── FOOTER ── */
+    footer { border-top: 1px solid var(--border); padding: 1.6rem 2.5rem; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 0.68rem; letter-spacing: 0.08em; }
+
+    @media (max-width: 768px) {
+      nav { padding: 1rem 1.25rem; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .page { padding: 6rem 1.25rem 4rem; }
+      footer { flex-direction: column; gap: 0.4rem; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-logo" href="../index.html">Izzi Renan</a>
+    <div class="nav-right">
+      <ul class="nav-links">
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#projects">Projects</a></li>
+        <li><a href="../resume.html">Resume</a></li>
+        <li><a href="../blog.html" class="active">Blog</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <span class="toggle-icon moon">🌙</span>
+        <span class="toggle-icon sun">☀️</span>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="../index.html#about" class="mobile-link">About</a>
+    <a href="../index.html#projects" class="mobile-link">Projects</a>
+    <a href="../resume.html" class="mobile-link">Resume</a>
+    <a href="../blog.html" class="mobile-link">Blog</a>
+    <a href="../index.html#contact" class="mobile-link">Contact</a>
+  </div>
+
+  <div class="page">
+
+    <header class="post-header">
+      <a href="../blog.html" class="back-link">← Back to Blog</a>
+      <div class="post-meta">
+        <span class="post-tag">Okta</span>
+        <span class="post-date">April 2026 · 5 min read</span>
+      </div>
+      <h1 class="post-title">10 Okta Tips Every IT Admin Should Know</h1>
+      <p class="post-intro">
+        After managing Okta for 500+ users across EMEA, APAC, and Israel, I've built up a list of settings, workflows, and habits that make a real difference. Some of these are buried in the docs, some I learned the hard way.
+      </p>
+    </header>
+
+    <div class="post-content">
+
+      <div class="tip">
+        <div class="tip-number">Tip 01</div>
+        <div class="tip-title">Use Group Rules to automate app assignments</div>
+        <p>Instead of manually assigning apps to every new user, set up Group Rules that automatically add people to the right groups based on their profile attributes — department, title, location. When a new hire is created with the right attributes, they get all their apps on day one without any manual work.</p>
+        <div class="tip-note">💡 Go to Directory → Groups → Rules → Add Rule. Use expressions like <code>user.department=="Engineering"</code> to target specific users.</div>
+      </div>
+
+      <div class="tip">
+        <div class="tip-number">Tip 02</div>
+        <div class="tip-title">Always use a break-glass admin account</div>
+        <p>Your regular admin account is tied to SSO and MFA. If something breaks — a misconfigured policy, a bad MFA factor, a locked-out authenticator — you need a way back in. Keep one dedicated break-glass account with a local Okta password (no SSO), stored securely, that you only use in emergencies. Test it quarterly.</p>
+      </div>
+
+      <div class="tip">
+        <div class="tip-number">Tip 03</div>
+        <div class="tip-title">Set session lifetime policies per app, not globally</div>
+        <p>A blanket 8-hour session timeout works for most apps but is way too long for sensitive ones like your IdP admin console or finance tools. Use Sign-On policies per application to enforce shorter sessions and re-authentication for high-risk apps, while keeping longer sessions for productivity tools like Google Workspace.</p>
+      </div>
+
+      <div class="tip">
+        <div class="tip-number">Tip 04</div>
+        <div class="tip-title">Audit inactive admin accounts monthly</div>
+        <p>Okta admins accumulate over time — contractors, ex-employees, or people who just don't need access anymore. Run a monthly audit of your admin list, check last login dates, and remove anyone who hasn't logged in within 30 days. I built a script to automate this — it's one of the projects on my portfolio.</p>
+      </div>
+
+      <div class="tip">
+        <div class="tip-number">Tip 05</div>
+        <div class="tip-title">Use Okta Workflows for offboarding, not just onboarding</div>
+        <p>Most people set up Workflows for onboarding and forget about offboarding. Build a flow that automatically deactivates users, removes them from all groups, revokes sessions, and clears enrolled factors when triggered — either by HR system update or a manual trigger. Pair it with a script for the external systems Okta doesn't cover (JAMF, Zoom, Asana).</p>
+      </div>
+
+      <div class="tip">
+        <div class="tip-number">Tip 06</div>
+        <div class="tip-title">Enable Okta ThreatInsight in log-only mode first</div>
+        <p>ThreatInsight can block suspicious IPs automatically, which is great — but if you enable it in block mode without testing first, you risk locking out legitimate users on shared IPs or VPNs. Enable it in audit mode first, monitor the logs for a week, and only switch to block mode once you're confident it won't cause false positives.</p>
+      </div>
+
+      <div class="tip">
+        <div class="tip-number">Tip 07</div>
+        <div class="tip-title">Name your apps and groups consistently</div>
+        <p>This sounds obvious but it becomes critical at scale. Pick a naming convention early — like <code>[App] - [Environment] - [AccessLevel]</code> — and stick to it. Inconsistent group names make rules harder to write, reports harder to read, and access reviews a nightmare. Clean naming is cheap now and saves hours later.</p>
+      </div>
+
+      <div class="tip">
+        <div class="tip-number">Tip 08</div>
+        <div class="tip-title">Use the System Log as your first debugging tool</div>
+        <p>When a user can't log in or an app isn't working, the Okta System Log (Reports → System Log) is the fastest way to diagnose the issue. Filter by user or app, look at the event type and outcome, and check the "Debug Data" section. 90% of issues are explained there — wrong MFA factor, IP blocked, policy mismatch.</p>
+        <div class="tip-note">💡 Use the filter <code>actor.alternateId eq "user@company.com"</code> to quickly find all events for a specific user.</div>
+      </div>
+
+      <div class="tip">
+        <div class="tip-number">Tip 09</div>
+        <div class="tip-title">Don't skip the profile editor for custom attributes</div>
+        <p>If your HR system or directory has fields that Okta doesn't have by default — like employee ID, cost center, or office location — add them as custom profile attributes. These unlock much more powerful Group Rules, Workflow conditions, and reporting. The Profile Editor is under Directory → Profile Editor → User (default).</p>
+      </div>
+
+      <div class="tip">
+        <div class="tip-number">Tip 10</div>
+        <div class="tip-title">Run access reviews before not after audits</div>
+        <p>Access certification reviews feel painful because they're usually done reactively — before an audit, after an incident. Build a quarterly review into your calendar as a normal IT task. Pull the list of who has access to what, review it with the relevant app owners, and document removals. When the auditor asks, you have clean records instead of scrambling.</p>
+      </div>
+
+      <hr class="post-divider">
+
+      <p class="post-closing">
+        These are habits built from real experience managing Okta at scale. If you have questions or want to discuss any of these in more depth, feel free to reach out at <a href="mailto:izzi@izzirenan.com">izzi@izzirenan.com</a> or connect on <a href="https://www.linkedin.com/in/izzi-renan/" target="_blank">LinkedIn</a>.
+      </p>
+
+      <div class="author-card">
+        <div class="author-avatar">IR</div>
+        <div class="author-info">
+          <div class="author-name">Izzi Renan</div>
+          <div class="author-bio">IT Systems & Automation Engineer. Managing Okta, Google Workspace, and JAMF for 500+ users at Forter. Based in Herzliya, Israel.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <span>© 2026 Izzi Renan</span>
+    <span><a href="../blog.html" style="color:var(--muted); text-decoration:none;">← Back to Blog</a></span>
+  </footer>
+
+  <script>
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('open');
+      mobileMenu.classList.toggle('open');
+    });
+    document.querySelectorAll('.mobile-link').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('open');
+        mobileMenu.classList.remove('open');
+      });
+    });
+
+    const html = document.documentElement;
+    const toggle = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('theme') || 'dark';
+    html.setAttribute('data-theme', saved);
+    toggle.addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  </script>
+
+</body>
+</html>
