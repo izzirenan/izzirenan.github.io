@@ -634,9 +634,13 @@
 
     #form-success {
       display: none;
-      color: var(--accent);
-      font-size: 0.75rem;
-      letter-spacing: 0.06em;
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 2.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
       text-align: center;
       padding: 0.5rem 1.25rem;
       border: 1px solid var(--accent);
@@ -910,7 +914,11 @@
       </div>
     </form>
 
-    <div id="form-success">✓ Message sent! I'll be in touch soon.</div>
+    <div id="form-success">
+      <div style="font-size:2rem; margin-bottom:1rem; color:var(--accent);">✓</div>
+      <div style="font-family:var(--font-serif); font-size:1.5rem; margin-bottom:0.75rem; color:var(--text);">Thanks for reaching out!</div>
+      <p style="color:var(--muted); font-size:0.88rem; line-height:1.8; margin:0;">Your message has been received. I'll get back to you as soon as possible.</p>
+    </div>
 
     <div class="contact-links">
       <a href="https://github.com/izzirenan" class="btn btn-ghost" target="_blank">GitHub</a>
