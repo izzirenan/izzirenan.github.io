@@ -737,7 +737,9 @@
 
     /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
-      nav { padding: 1rem 1.25rem; position: sticky; top: 0; }
+      nav { padding: 1rem 1.25rem; position: fixed; top: 0; transition: transform 0.3s ease; }
+      nav.nav-hidden { transform: translateY(-100%); }
+      #hero { padding: 5rem 1.25rem 4.5rem; }
       .nav-links { display: none; }
       .theme-toggle { display: none !important; }
       .hamburger { display: flex; }
@@ -1037,6 +1039,21 @@
 
     // Toggle starts hidden — only show it on desktop
     if (!window.matchMedia('(max-width: 768px)').matches) { toggle.style.display = ''; }
+
+    // Smart nav: hide on scroll down, show on scroll up (mobile only)
+    if (window.matchMedia('(max-width: 768px)').matches) {
+      const nav = document.querySelector('nav');
+      let lastY = 0;
+      window.addEventListener('scroll', () => {
+        const y = window.scrollY;
+        if (y > lastY && y > 80) {
+          nav.classList.add('nav-hidden');
+        } else {
+          nav.classList.remove('nav-hidden');
+        }
+        lastY = y;
+      }, { passive: true });
+    }
 
     const saved = localStorage.getItem('theme') || 'dark';
     html.setAttribute('data-theme', saved);

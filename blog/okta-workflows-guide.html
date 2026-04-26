@@ -191,11 +191,11 @@
     footer { border-top: 1px solid var(--border); padding: 1.6rem 2.5rem; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 0.68rem; letter-spacing: 0.08em; }
 
     @media (max-width: 768px) {
-      nav { padding: 1rem 1.25rem; }
+      nav { padding: 1rem 1.25rem; position: sticky; top: 0; }
       .nav-links { display: none; }
       .theme-toggle { display: none !important; }
       .hamburger { display: flex; }
-      .page { padding: 6rem 1.25rem 4rem; }
+      .page { padding: 3rem 1.25rem 4rem; }
       footer { flex-direction: column; gap: 0.4rem; text-align: center; }
       .mobile-theme-row { display: flex; align-items: center; gap: 1rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); letter-spacing: 0.08em; }
       .mobile-theme-toggle { width: 48px; height: 26px; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; cursor: pointer; position: relative; flex-shrink: 0; }
