@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zero-Touch Mac Onboarding with Jamf — Izzi Renan</title>
+  <meta name="description" content="How to set up Jamf for fully automated Mac onboarding. From Apple Business Manager to a configured, ready-to-work laptop — with zero IT hands-on time.">
+  <meta property="og:title" content="Zero-Touch Mac Onboarding with Jamf — Izzi Renan">
+  <meta property="og:description" content="How to set up Jamf for fully automated Mac onboarding. From Apple Business Manager to a configured, ready-to-work laptop — with zero IT hands-on time.">
+  <meta property="og:url" content="https://izzirenan.com/blog/jamf-zero-touch-onboarding.html">
+  <meta property="og:type" content="article">
+  <meta property="og:image" content="https://izzirenan.com/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Zero-Touch Mac Onboarding with Jamf — Izzi Renan">
+  <meta name="twitter:description" content="How to set up Jamf for fully automated Mac onboarding. From Apple Business Manager to a configured, ready-to-work laptop — with zero IT hands-on time.">
+  <meta name="twitter:image" content="https://izzirenan.com/social-preview.png">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8F1EH7CXNH"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-8F1EH7CXNH');
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0d0d;
+      --surface:   #161616;
+      --surface2:  #1e1e1e;
+      --border:    #2a2a2a;
+      --text:      #e8e4dc;
+      --muted:     #777;
+      --accent:    #c8f55a;
+      --accent2:   #f5a623;
+      --accent-dim: rgba(200, 245, 90, 0.08);
+      --nav-bg:    rgba(13, 13, 13, 0.88);
+      --font-serif: 'DM Serif Display', Georgia, serif;
+      --font-mono:  'DM Mono', 'Courier New', monospace;
+      --ease:       cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="light"] {
+      --bg:        #f5f2ec;
+      --surface:   #edeae3;
+      --surface2:  #e4e1d9;
+      --border:    #d4d0c8;
+      --text:      #18160f;
+      --muted:     #706d66;
+      --accent:    #527a00;
+      --accent2:   #b86e00;
+      --accent-dim: rgba(82, 122, 0, 0.08);
+      --nav-bg:    rgba(245, 242, 236, 0.9);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.75;
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.4s var(--ease), color 0.4s var(--ease);
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.45;
+    }
+
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 500; display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 2.5rem; background: var(--nav-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); transition: background 0.4s var(--ease), transform 0.3s ease; }
+    nav.nav-hidden { transform: translateY(-100%); }
+    .nav-logo { font-family: var(--font-serif); font-size: 1.25rem; color: var(--accent); text-decoration: none; }
+    .nav-right { display: flex; align-items: center; gap: 2.5rem; }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+    .theme-toggle { width: 48px; height: 26px; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; cursor: pointer; position: relative; flex-shrink: 0; }
+    .theme-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); transition: transform 0.35s var(--ease); }
+    [data-theme="light"] .theme-toggle::after { transform: translateX(22px); }
+    .toggle-icon { position: absolute; font-size: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+    .toggle-icon.moon { left: 5px; }
+    .toggle-icon.sun  { right: 5px; }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--text); border-radius: 2px; transition: all 0.3s var(--ease); }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .mobile-menu { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 400; flex-direction: column; align-items: center; justify-content: center; gap: 2.5rem; }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { font-family: var(--font-serif); font-size: 2rem; color: var(--text); text-decoration: none; }
+
+    .page { max-width: 720px; margin: 0 auto; padding: 8rem 2.5rem 6rem; }
+
+    .back-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; color: var(--muted); text-decoration: none; letter-spacing: 0.08em; margin-bottom: 2rem; transition: color 0.2s; }
+    .back-link:hover { color: var(--accent); }
+
+    .post-meta { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+    .post-tag { font-size: 0.63rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); background: var(--accent-dim); padding: 0.22rem 0.7rem; border-radius: 999px; }
+    .post-date { font-size: 0.68rem; color: var(--muted); }
+
+    .post-title { font-family: var(--font-serif); font-size: clamp(2rem, 5vw, 3.25rem); line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1rem; }
+
+    .post-intro { color: var(--muted); font-size: 0.95rem; line-height: 1.85; border-left: 2px solid var(--accent); padding-left: 1.25rem; margin-bottom: 3rem; }
+
+    .post-content { display: flex; flex-direction: column; gap: 2rem; }
+
+    .section-heading {
+      font-family: var(--font-serif);
+      font-size: 1.6rem;
+      letter-spacing: -0.02em;
+      margin-top: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .body-text {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.9;
+    }
+
+    .body-text a { color: var(--accent); text-decoration: none; }
+    .body-text a:hover { text-decoration: underline; }
+
+    .step {
+      padding: 1.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .step-number { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+    .step-title { font-family: var(--font-serif); font-size: 1.2rem; margin-bottom: 0.75rem; }
+    .step p { color: var(--muted); font-size: 0.85rem; line-height: 1.85; }
+    .step-note { margin-top: 1rem; padding: 0.75rem 1rem; background: var(--accent-dim); border-radius: 4px; font-size: 0.78rem; color: var(--accent); line-height: 1.7; }
+
+    .use-case {
+      border-left: 3px solid var(--accent2);
+      padding: 1.25rem 1.5rem;
+      background: var(--surface);
+      border-radius: 0 8px 8px 0;
+    }
+
+    .use-case-label { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent2); margin-bottom: 0.4rem; }
+    .use-case-title { font-family: var(--font-serif); font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .use-case p { color: var(--muted); font-size: 0.83rem; line-height: 1.8; }
+
+    .warning {
+      padding: 1rem 1.25rem;
+      background: rgba(245, 166, 35, 0.08);
+      border: 1px solid rgba(245, 166, 35, 0.25);
+      border-radius: 6px;
+      font-size: 0.82rem;
+      color: var(--accent2);
+      line-height: 1.75;
+    }
+
+    .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .stat-box { padding: 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; text-align: center; }
+    .stat-value { font-family: var(--font-serif); font-size: 2rem; color: var(--accent); line-height: 1; margin-bottom: 0.4rem; }
+    .stat-label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; }
+
+    .post-divider { border: none; border-top: 1px solid var(--border); }
+
+    .post-closing { color: var(--muted); font-size: 0.88rem; line-height: 1.85; }
+    .post-closing a { color: var(--accent); text-decoration: none; }
+    .post-closing a:hover { text-decoration: underline; }
+
+    .author-card { display: flex; align-items: center; gap: 1.25rem; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+    .author-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-dim); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-size: 1.1rem; color: var(--accent); flex-shrink: 0; }
+    .author-name { color: var(--text); font-family: var(--font-serif); font-size: 1rem; margin-bottom: 0.2rem; }
+    .author-bio { color: var(--muted); font-size: 0.82rem; line-height: 1.6; }
+
+    .related { padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: inherit; display: block; transition: border-color 0.2s, transform 0.2s; }
+    .related:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .related-label { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+    .related-title { font-family: var(--font-serif); font-size: 1.1rem; color: var(--text); }
+
+    footer { border-top: 1px solid var(--border); padding: 1.6rem 2.5rem; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 0.68rem; letter-spacing: 0.08em; }
+
+    @media (max-width: 768px) {
+      nav { padding: 1rem 1.25rem; position: fixed; top: 0; transition: transform 0.3s ease; }
+      nav.nav-hidden { transform: translateY(-100%); }
+      .nav-links { display: none; }
+      .theme-toggle { display: none !important; }
+      .hamburger { display: flex; }
+      .page { padding: 5rem 1.25rem 4rem; }
+      .stat-row { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 0.4rem; text-align: center; }
+      .mobile-theme-row { display: flex; align-items: center; gap: 1rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); letter-spacing: 0.08em; }
+      .mobile-theme-toggle { width: 48px; height: 26px; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; cursor: pointer; position: relative; flex-shrink: 0; }
+      .mobile-theme-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); transition: transform 0.35s var(--ease); }
+      [data-theme="light"] .mobile-theme-toggle::after { transform: translateX(22px); }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-logo" href="../index.html">Izzi Renan</a>
+    <div class="nav-right">
+      <ul class="nav-links">
+        <li><a href="../index.html#about">About</a></li>
+        <li><a href="../index.html#projects">Projects</a></li>
+        <li><a href="../resume.html">Resume</a></li>
+        <li><a href="../blog.html" class="active">Blog</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" style="display:none">
+        <span class="toggle-icon moon">🌙</span>
+        <span class="toggle-icon sun">☀️</span>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="../index.html#about" class="mobile-link">About</a>
+    <a href="../index.html#projects" class="mobile-link">Projects</a>
+    <a href="../resume.html" class="mobile-link">Resume</a>
+    <a href="../blog.html" class="mobile-link">Blog</a>
+    <a href="../index.html#contact" class="mobile-link">Contact</a>
+    <div class="mobile-theme-row">
+      <span id="mobileThemeLabel">Dark mode</span>
+      <button class="mobile-theme-toggle" id="mobileThemeToggle" aria-label="Toggle theme"></button>
+    </div>
+  </div>
+
+  <div class="page">
+
+    <a href="../blog.html" class="back-link">← Back to Blog</a>
+
+    <div class="post-meta">
+      <span class="post-tag">Jamf</span>
+      <span class="post-date">April 2026 · 8 min read</span>
+    </div>
+
+    <h1 class="post-title">Zero-Touch Mac Onboarding with Jamf: From Box to Productive in Under an Hour</h1>
+
+    <p class="post-intro">
+      The old way of onboarding a Mac: IT opens the box, spends an hour configuring it, hands it to the new hire, and prays nothing breaks. The new way: the new hire opens the box themselves, signs in with their company credentials, and everything — apps, settings, security policies — installs automatically. Here's exactly how to build that with Jamf.
+    </p>
+
+    <div class="post-content">
+
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-value">&lt;1hr</div>
+          <div class="stat-label">Onboarding time</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">0</div>
+          <div class="stat-label">IT hands-on minutes</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">100%</div>
+          <div class="stat-label">Consistent config</div>
+        </div>
+      </div>
+
+      <h2 class="section-heading">What "Zero-Touch" Actually Means</h2>
+
+      <p class="body-text">
+        Zero-touch onboarding means a Mac can go from factory packaging to a fully configured, work-ready machine without any IT involvement. The new hire opens the box, powers on, signs in with their Okta (or any IdP) credentials during Setup Assistant, and Jamf takes it from there — installing apps, applying security settings, enrolling in management, all automatically.
+        <br><br>
+        This is made possible by three things working together: Apple Business Manager (ABM) for device enrollment, Jamf Pro as the MDM, and a well-designed prestage and policy setup. None of these alone is enough — the magic is in how you connect them.
+      </p>
+
+      <h2 class="section-heading">Prerequisites</h2>
+
+      <div class="step">
+        <div class="step-number">Prereq 01</div>
+        <div class="step-title">Apple Business Manager (ABM)</div>
+        <p>ABM is Apple's free portal for businesses. It lets you automatically enroll devices into your MDM the moment they're powered on — this is called Automated Device Enrollment (ADE), formerly DEP. Every Mac your company buys through Apple or an authorized reseller can be automatically linked to your ABM org and pushed directly into Jamf. If you buy from an authorized reseller, make sure to give them your ABM Organization ID at purchase time so devices are linked from the start.</p>
+        <div class="step-note">💡 You can also manually add older devices to ABM using Apple Configurator 2 if they weren't originally purchased through a reseller.</div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Prereq 02</div>
+        <div class="step-title">Jamf Pro connected to ABM</div>
+        <p>In Jamf Pro, go to Settings → Global Management → Device Enrollment Program. Add your ABM token (download it from ABM under MDM Servers). Once connected, any Mac assigned to your Jamf MDM server in ABM will automatically appear in Jamf when it's powered on for the first time. This is the foundation of the whole setup.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Prereq 03</div>
+        <div class="step-title">An identity provider for Setup Assistant (optional but recommended)</div>
+        <p>If you're using Okta or Azure AD, you can configure Jamf Connect to show a custom login screen during Setup Assistant. The user logs in with their IdP credentials, which creates a local macOS account tied to their identity. This replaces the standard Apple ID flow and gives IT full control over account creation — no personal Apple IDs, no local accounts with unknown passwords.</p>
+      </div>
+
+      <h2 class="section-heading">The Setup: Step by Step</h2>
+
+      <div class="step">
+        <div class="step-number">Step 01</div>
+        <div class="step-title">Create a PreStage Enrollment</div>
+        <p>In Jamf Pro, go to Computers → PreStage Enrollments → New. This is the configuration that runs the moment a device enrolls via ABM. You'll configure: which Setup Assistant screens to skip (you can skip most of them), whether enrollment is supervised, which department and site to assign to, and MDM profile settings. Set "Require MDM enrollment" to prevent users from skipping management. Assign your new Macs to this prestage in ABM under Devices → Computers → your device → Edit → MDM Server.</p>
+        <div class="step-note">💡 Enable "Supervised" mode in the prestage. Supervised devices get significantly more management capabilities — including the ability to silently install apps without user approval.</div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 02</div>
+        <div class="step-title">Build your Configuration Profiles</div>
+        <p>Configuration Profiles are the core of your security and settings enforcement. In Jamf Pro, go to Computers → Configuration Profiles → New. Each profile handles a specific domain — FileVault encryption, password policy, screen lock timeout, Wi-Fi settings, certificate distribution, and so on. Create separate profiles for each category so you can scope them independently. At minimum, set up: FileVault enforcement, screen lock after 5 minutes, disable AirDrop on managed devices, and your corporate Wi-Fi profile.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 03</div>
+        <div class="step-title">Set up Policies for app installation</div>
+        <p>Policies in Jamf run scripts and install packages on a trigger — enrollment, login, recurring check-in, or on-demand. Create an "Onboarding" policy scoped to a "New Enrollment" smart group (devices enrolled in the last 7 days). Set the trigger to "Enrollment Complete" and have it install your core apps: Google Chrome, Slack, Zoom, 1Password, whatever your stack is. For each app, upload the .pkg to Jamf's package list or use a Jamf-compatible package source.</p>
+        <div class="step-note">💡 Use Installomator (an open-source script) to install and keep apps like Chrome and Zoom updated without managing .pkg files manually. It's a huge time saver.</div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 04</div>
+        <div class="step-title">Configure Self Service</div>
+        <p>Jamf Self Service is a macOS app that gives users an IT app store. Add optional apps (like developer tools, design software, or VPN clients) to Self Service so users can install them on-demand without submitting an IT ticket. Scope each Self Service item to the appropriate department or group — don't give everyone access to everything. This is one of the highest ROI things you can do in Jamf: it cuts help desk volume significantly.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">Step 05</div>
+        <div class="step-title">Test the full flow before rolling out</div>
+        <p>Assign a test Mac to your prestage in ABM, factory reset it (or use a fresh unit), and power it on. Go through the full Setup Assistant flow as a new employee would. Watch the Jamf management logs in real time under Computers → your test device → History. Verify every profile applied, every policy ran, and every app installed. Fix any sequencing issues (some apps need to install before others) before your first real hire goes through it.</p>
+      </div>
+
+      <h2 class="section-heading">Common Gotchas</h2>
+
+      <div class="use-case">
+        <div class="use-case-label">Gotcha 01</div>
+        <div class="use-case-title">Policies running too early</div>
+        <p>If a policy triggers at enrollment but the device isn't fully set up yet (no user logged in, no network), it will fail silently. Add a delay script or use a "Login" trigger instead of "Enrollment Complete" for policies that need a user context. Jamf's execution history will show you exactly which policies failed and why.</p>
+      </div>
+
+      <div class="use-case">
+        <div class="use-case-label">Gotcha 02</div>
+        <div class="use-case-title">ABM device assignment lag</div>
+        <p>New Macs don't always appear in ABM immediately after purchase — it can take 24–72 hours for the reseller to sync. Always check ABM before shipping a Mac to a new hire. If a Mac was already powered on before it appeared in ABM, you'll need to erase and re-setup to trigger the ADE enrollment flow.</p>
+      </div>
+
+      <div class="use-case">
+        <div class="use-case-label">Gotcha 03</div>
+        <div class="use-case-title">Apps requiring user approval</div>
+        <p>Even on supervised devices, some system extensions (like VPN clients or EDR agents) require explicit user approval during their first install. You can pre-approve these with a PPPC (Privacy Preferences Policy Control) configuration profile, but get the exact bundle identifiers right — a wrong PPPC profile can cause more problems than it solves. Test each one individually.</p>
+      </div>
+
+      <div class="warning">
+        ⚠️ <strong>Never scope a policy to "All Computers" unless you're certain.</strong> A policy scoped to all computers will run on every Mac in your fleet — including your own. Use smart groups to scope precisely. A good rule: always test on a smart group of one (just your test device) before expanding scope.
+      </div>
+
+      <h2 class="section-heading">What the New Hire Experience Looks Like</h2>
+
+      <p class="body-text">
+        When everything is set up correctly, this is what a new hire sees:
+        <br><br>
+        They receive a Mac in a box (shipped directly from Apple or forwarded from your office). They open it, plug it in, and power on. The Setup Assistant runs — most screens are skipped automatically. They reach a login screen branded with your company logo (if using Jamf Connect), enter their Okta credentials, and their local account is created.
+        <br><br>
+        Within the next 10–20 minutes, Jamf silently installs Slack, Zoom, Chrome, and your other core apps. FileVault encrypts the disk in the background. Security policies apply. The dock gets configured. By the time the new hire finishes their first HR onboarding call, their Mac is ready to go.
+        <br><br>
+        No IT ticket. No waiting for IT to configure the machine. No "I'll need to get IT to set that up for you." Just a working laptop from day one.
+      </p>
+
+      <hr class="post-divider">
+
+      <p class="post-closing">
+        Zero-touch onboarding takes a few days to set up properly, but it pays off immediately with your first hire. The consistency alone is worth it — every Mac in your fleet is configured identically, every security policy is enforced, and IT spends time on real problems instead of clicking through Setup Assistant. If you're setting this up and run into specific issues, feel free to reach out at <a href="mailto:izzi@izzirenan.com">izzi@izzirenan.com</a>.
+      </p>
+
+      <div class="author-card">
+        <div class="author-avatar">IR</div>
+        <div class="author-info">
+          <div class="author-name">Izzi Renan</div>
+          <div class="author-bio">IT Systems & Automation Engineer. Managing Okta, Google Workspace, and JAMF for 500+ users at Forter. Based in Herzliya, Israel.</div>
+        </div>
+      </div>
+
+      <div style="margin-top:0.5rem;">
+        <div style="font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:0.75rem;">Related reading</div>
+        <a href="okta-workflows-guide.html" class="related">
+          <div class="related-label">Previous post</div>
+          <div class="related-title">Okta Workflows for IT Admins: Automate Without Code →</div>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <span>© 2026 Izzi Renan</span>
+    <span><a href="../blog.html" style="color:var(--muted); text-decoration:none;">← Back to Blog</a></span>
+  </footer>
+
+  <script>
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('open');
+      mobileMenu.classList.toggle('open');
+    });
+    document.querySelectorAll('.mobile-link').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('open');
+        mobileMenu.classList.remove('open');
+      });
+    });
+
+    const html = document.documentElement;
+    const toggle = document.getElementById('themeToggle');
+    const mobileToggle = document.getElementById('mobileThemeToggle');
+    const mobileLabel = document.getElementById('mobileThemeLabel');
+
+    // Toggle starts hidden — only show it on desktop
+    if (!window.matchMedia('(max-width: 768px)').matches) { toggle.style.display = ''; }
+
+    // Smart nav: hide on scroll down, show on scroll up (mobile only)
+    if (window.matchMedia('(max-width: 768px)').matches) {
+      const nav = document.querySelector('nav');
+      let lastY = 0;
+      window.addEventListener('scroll', () => {
+        const y = window.scrollY;
+        if (y > lastY && y > 80) {
+          nav.classList.add('nav-hidden');
+        } else {
+          nav.classList.remove('nav-hidden');
+        }
+        lastY = y;
+      }, { passive: true });
+    }
+
+    const saved = localStorage.getItem('theme') || 'dark';
+    html.setAttribute('data-theme', saved);
+    if (mobileLabel) mobileLabel.textContent = saved === 'dark' ? 'Dark mode' : 'Light mode';
+
+    function applyTheme(next) {
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      if (mobileLabel) mobileLabel.textContent = next === 'dark' ? 'Dark mode' : 'Light mode';
+    }
+
+    toggle.addEventListener('click', () => {
+      applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    });
+    if (mobileToggle) {
+      mobileToggle.addEventListener('click', () => {
+        applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+      });
+    }
+  </script>
+
+</body>
+</html>
